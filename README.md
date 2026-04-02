@@ -1,71 +1,86 @@
-# Practical lesson pz-SOLID  
-# Практична реалізація SOLID принципів  
 
-> У цьому занятті студенти отримують практичні навички застосування SOLID принципів під час рефакторингу існуючого коду.  
-> Мета — створити гнучку, масштабовану та чисту архітектуру шляхом застосування SRP, OCP, LSP, ISP та DIP.
+# pz-SOLID — Практична реалізація SOLID принципів
 
----
-
-## What need to do:
-* Провести аналіз вихідного «анти-SOLID» коду  
-* Визначити порушення кожного SOLID принципу  
-* Виконати рефакторинг згідно з:
-  * SRP — Single Responsibility Principle  
-  * OCP — Open/Closed Principle  
-  * LSP — Liskov Substitution Principle  
-  * ISP — Interface Segregation Principle  
-  * DIP — Dependency Inversion Principle  
-* Створити відповідні інтерфейси й абстракції  
-* Усунути зайві або циклічні залежності  
-* Додати мінімальний набір unit-тестів після рефакторингу  
+## Мета
+Рефакторинг «анти-SOLID» коду медіаплеєра з застосуванням усіх 5 принципів SOLID на TypeScript.
 
 ---
 
-## Acceptance criteria
-* Реалізація на мові Typescript 
-* Студент розуміє кожен SOLID принцип та пояснює його застосування  
-* Увесь вихідний код проаналізовано  
-* Усі порушення SOLID знайдено та описано  
-* Після рефакторингу:
-  * Кожен клас має одну відповідальність (SRP)  
-  * Код розширюється через нові класи, а не редагування існуючих (OCP)  
-  * Класи-нащадки повністю заміщають базові (LSP)  
-  * Інтерфейси невеликі й специфічні (ISP)  
-  * Залежності реалізовані через абстракції (DIP)  
-* Код структурований, логічний та зрозумілий  
-* Усі тести проходять успішно  
-* Звіт оформлений у Markdown (README.md)
+## Аналіз порушень оригінального коду
 
-## Directory Structure
+| Принцип | Де порушено | Опис порушення |
+|---|---|---|
+| SRP | `MediaPlayer` | Один клас відповідає за конвертацію, збереження і сповіщення |
+| OCP | `convert()` | Новий формат вимагає редагування існуючого методу через `if/else` |
+| LSP | `RadioPlayer extends BasePlayer` | `RadioPlayer.record()` і `rewind()` кидають `Error` — порушують контракт базового класу |
+| ISP | `IDevice` | Один великий інтерфейс змушує всі класи реалізовувати непотрібні методи |
+| DIP | `MediaPlayer` | Клас напряму залежить від конкретних реалізацій, а не від абстракцій |
+
+---
+
+## Застосування принципів після рефакторингу
+
+### SRP — Single Responsibility Principle
+Клас `MediaPlayer` розбито на три незалежні класи:
+- `MediaConverters.ts` — відповідає лише за конвертацію
+- `MediaRepository.ts` — відповідає лише за збереження
+- `Notifier.ts` — відповідає лише за сповіщення
+
+### OCP — Open/Closed Principle
+Замість `if/else` на формати — окремі класи `Mp3Converter`, `WavConverter`, `OggConverter`, кожен реалізує інтерфейс `IMediaConverter`. Новий формат = новий клас, без редагування існуючого коду.
+
+### LSP — Liskov Substitution Principle
+Інтерфейс `IDevice` розбито на `IPlayable`, `IRecordable`, `IRewindable`. `RadioPlayer` реалізує лише `IPlayable` — жодних методів що кидають `Error`.
+
+### ISP — Interface Segregation Principle
+Замість одного великого `IDevice` — маленькі специфічні інтерфейси: `IMediaConverter`, `IMediaRepository`, `INotifier`, `IPlayable`, `IRecordable`, `IRewindable`.
+
+### DIP — Dependency Inversion Principle
+`MediaService` отримує всі залежності через конструктор у вигляді інтерфейсів — не створює жодного об'єкта через `new`.
+
+---
+
+## Структура проєкту
+
 ```
-├── pz-SOLID
-│   ├── src
-│   │   ├── original          # код із навмисними порушеннями SOLID
-│   │   ├── refactored        # код після рефакторингу
-│   │   ├── interfaces        # абстракції та інтерфейси
-│   ├── tests
-│   │   ├── refactored.spec.js
-│   ├── .editorconfig
-│   ├── .gitignore
-│   ├── jest.config.js
-│   ├── package.json
-│   ├── package-lock.json
-│   ├── README.md
-└──
+pz-SOLID/
+├── src/
+│   ├── interfaces/
+│   │   ├── IMediaConverter.ts
+│   │   ├── IMediaRepository.ts
+│   │   ├── INotifier.ts
+│   │   └── IPlayable.ts
+│   ├── original/
+│   │   └── MediaPlayer.ts       # анти-SOLID код
+│   └── refactored/
+│       ├── MediaConverters.ts
+│       ├── MediaRepository.ts
+│       ├── MediaService.ts
+│       └── Notifier.ts
+├── tests/
+│   └── refactored.spec.ts
+├── jest.config.js
+├── tsconfig.json
+└── package.json
 ```
 
-## Useful links
+## Запуск тестів
 
-[SOLID Principles Explained](https://www.baeldung.com/solid-principles)
+```bash
+npx jest
+```
 
-[SOLID: The First 5 Principles of Object-Oriented Design](https://www.freecodecamp.org/news/solid-principles-explained-in-plain-english/)
+### Результат
 
-[JavaScript SOLID: Реалізація принципів](https://khalilstemmler.com/articles/solid-principles/)
+```
+Tests: 9 passed, 9 total
+```
+```
 
-[Clean Code Concepts Adapted for JavaScript](https://github.com/ryanmcdermott/clean-code-javascript)
+***
 
-[Dependency Injection in JavaScript](https://javascript.plainenglish.io/dependency-injection-in-javascript-1b82a8101c1a)
-
-
-
-
+Після цього проект **повністю готовий** до здачі. Всі вимоги виконані:
+-  TypeScript
+-  Всі 5 принципів SOLID реалізовані
+-  Інтерфейси й абстракції
+-  9 тестів проходять
